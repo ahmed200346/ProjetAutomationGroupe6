@@ -1,0 +1,156 @@
+/* RawCooked AI Chatbot — admin styles. */
+
+.rafiq-admin h1 { display: flex; align-items: center; gap: 10px; }
+.rafiq-logo { font-size: 28px; }
+
+.rafiq-tabs {
+	display: flex;
+	gap: 4px;
+	margin: 20px 0 0;
+	border-bottom: 1px solid #dcdcde;
+}
+
+.rafiq-tab {
+	border: 1px solid transparent;
+	border-bottom: none;
+	background: none;
+	padding: 10px 18px;
+	font-size: 14px;
+	cursor: pointer;
+	color: #50575e;
+	border-radius: 6px 6px 0 0;
+}
+
+.rafiq-tab:hover { color: #1d2327; }
+
+.rafiq-tab.is-active {
+	background: #fff;
+	border-color: #dcdcde;
+	color: #1d2327;
+	font-weight: 600;
+	margin-bottom: -1px;
+}
+
+.rafiq-panel { display: none; }
+.rafiq-panel.is-active { display: block; }
+
+.rafiq-card {
+	background: #fff;
+	border: 1px solid #dcdcde;
+	border-top: none;
+	padding: 8px 24px 24px;
+	margin-bottom: 16px;
+	border-radius: 0 0 8px 8px;
+}
+
+.rafiq-card + .rafiq-card { border-top: 1px solid #dcdcde; border-radius: 8px; margin-top: 16px; }
+
+.rafiq-provider-box {
+	border-left: 3px solid #dcdcde;
+	padding-left: 16px;
+	margin-top: 12px;
+}
+
+.rafiq-progress {
+	height: 12px;
+	background: #f0f0f1;
+	border-radius: 6px;
+	overflow: hidden;
+	margin: 10px 0;
+	max-width: 480px;
+}
+
+.rafiq-progress-bar {
+	height: 100%;
+	width: 0;
+	background: #2271b1;
+	border-radius: 6px;
+	transition: width 0.25s ease;
+}
+
+.rafiq-ok { color: #00762e; font-weight: 600; margin-left: 8px; }
+.rafiq-err { color: #b32d2e; font-weight: 600; margin-left: 8px; }
+
+/* Theme picker cards. */
+.rafiq-themes { display: flex; flex-wrap: wrap; gap: 12px; }
+
+.rafiq-theme-card {
+	cursor: pointer;
+	text-align: center;
+	border: 2px solid #dcdcde;
+	border-radius: 10px;
+	padding: 8px;
+	width: 110px;
+	transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.rafiq-theme-card:has(input:checked) {
+	border-color: #2271b1;
+	box-shadow: 0 0 0 3px rgba(34, 113, 177, 0.15);
+}
+
+.rafiq-theme-card input { position: absolute; opacity: 0; pointer-events: none; }
+
+.rafiq-theme-card__preview {
+	display: block;
+	height: 64px;
+	border-radius: 6px;
+	padding: 6px;
+	background: #f6f7f7;
+	position: relative;
+	overflow: hidden;
+}
+
+.rafiq-theme-card__bar { display: block; height: 12px; border-radius: 4px; background: #c8402f; }
+.rafiq-theme-card__msg { display: block; height: 8px; border-radius: 4px; margin-top: 6px; }
+.rafiq-theme-card__msg--a { width: 65%; background: #fff; border: 1px solid #dcdcde; }
+.rafiq-theme-card__msg--u { width: 45%; margin-left: 35%; background: #c8402f; }
+
+.rafiq-theme-card--midnight .rafiq-theme-card__preview { background: #161b26; }
+.rafiq-theme-card--midnight .rafiq-theme-card__bar { background: #10141d; }
+.rafiq-theme-card--midnight .rafiq-theme-card__msg--a { background: #262e3e; border-color: #303a4d; }
+
+.rafiq-theme-card--glass .rafiq-theme-card__preview { background: linear-gradient(135deg, #ffd9d3, #d3e0ff); }
+.rafiq-theme-card--glass .rafiq-theme-card__bar { background: rgba(200, 64, 47, 0.75); }
+.rafiq-theme-card--glass .rafiq-theme-card__msg--a { background: rgba(255, 255, 255, 0.7); border-color: rgba(255, 255, 255, 0.9); }
+
+.rafiq-theme-card--gradient .rafiq-theme-card__bar,
+.rafiq-theme-card--gradient .rafiq-theme-card__msg--u { background: linear-gradient(135deg, #c8402f, #7c3aed); }
+
+.rafiq-theme-card--minimal .rafiq-theme-card__preview { background: #fff; border: 1px solid #dcdcde; }
+.rafiq-theme-card--minimal .rafiq-theme-card__bar { background: #fff; border-bottom: 2px solid #dcdcde; border-radius: 0; }
+
+.rafiq-theme-card__name { display: block; margin-top: 6px; font-size: 12px; font-weight: 600; }
+
+/* Conversations tab. */
+.rafiq-stats { display: flex; flex-wrap: wrap; gap: 14px; margin: 10px 0; }
+
+.rafiq-stat {
+	flex: 1;
+	min-width: 140px;
+	background: #f6f7f7;
+	border: 1px solid #dcdcde;
+	border-radius: 8px;
+	padding: 14px;
+	text-align: center;
+}
+
+.rafiq-stat__num { display: block; font-size: 26px; font-weight: 700; color: #1d2327; }
+.rafiq-stat__label { display: block; margin-top: 4px; font-size: 12px; color: #50575e; }
+
+.rafiq-transcript {
+	margin-top: 14px;
+	max-height: 320px;
+	overflow-y: auto;
+	border: 1px solid #dcdcde;
+	border-radius: 8px;
+	padding: 12px;
+	background: #fafafa;
+}
+
+.rafiq-transcript__msg { padding: 8px 12px; border-radius: 8px; margin-bottom: 6px; max-width: 80%; font-size: 13px; }
+.rafiq-transcript__msg--u { background: #2271b1; color: #fff; margin-left: 20%; }
+.rafiq-transcript__msg--a { background: #fff; border: 1px solid #dcdcde; }
+.rafiq-transcript__flag { color: #b32d2e; font-size: 11px; }
+
+.rafiq-danger { color: #b32d2e !important; border-color: #b32d2e !important; }

@@ -1,0 +1,62 @@
+<?php
+
+defined( 'ABSPATH' ) || exit;
+$navigation_pages = isset( $this->pages ) ? $this->pages : $pages;
+$is_admin_logs_page = is_admin();
+$logs_navigation_url = static function ( $slug ) use ( $is_admin_logs_page ) {
+	return $is_admin_logs_page ? menu_page_url( $slug, false ) : add_query_arg( 'dsa_page', $slug, home_url( '/' ) );
+};
+?>
+<div class="wrap dsa-shell">
+	<aside class="dsa-sidebar" aria-label="<?php esc_attr_e( 'Navigation Dropshipping', 'dsa' ); ?>">
+		<a class="dsa-brand" href="<?php echo esc_url( admin_url( 'admin.php?page=dsa-dashboard' ) ); ?>"><span class="dsa-brand-mark" aria-hidden="true"><span class="dashicons dashicons-chart-area"></span></span><span class="dsa-brand-name"><?php esc_html_e( 'Dropshipping', 'dsa' ); ?><small><?php esc_html_e( 'AUTOMATION', 'dsa' ); ?></small></span></a>
+		<nav class="dsa-navigation" aria-label="<?php esc_attr_e( 'Sections du tableau de bord', 'dsa' ); ?>">
+			<?php foreach ( $navigation_pages as $slug => $navigation_page ) : ?>
+				<a class="dsa-nav-link<?php echo 'dsa-logs' === $slug ? ' is-active' : ''; ?>" href="<?php echo esc_url( $logs_navigation_url( $slug ) ); ?>"><span class="dashicons <?php echo esc_attr( $navigation_page['icon'] ); ?>" aria-hidden="true"></span><span><?php echo esc_html( $navigation_page['label'] ); ?></span></a>
+			<?php endforeach; ?>
+		</nav>
+		<div class="dsa-sidebar-footer"><span class="dsa-status-dot" aria-hidden="true"></span><span><?php esc_html_e( 'Espace de travail', 'dsa' ); ?></span><span class="dsa-version">v<?php echo esc_html( DSA_VERSION ); ?></span></div>
+	</aside>
+	<main class="dsa-main">
+		<header class="dsa-header">
+			<div class="dsa-heading"><p class="dsa-eyebrow"><?php esc_html_e( 'TRAÇABILITÉ', 'dsa' ); ?></p><h1><?php esc_html_e( 'Journaux & Notifications', 'dsa' ); ?></h1><p class="dsa-page-description"><?php esc_html_e( 'Runs simulés, alertes du tableau de bord et préférences de notification.', 'dsa' ); ?></p><?php require DSA_PLUGIN_DIR . 'views/partials/demo-badge.php'; ?></div>
+			<div class="dsa-header-actions"><button class="dsa-theme-toggle" type="button" aria-label="<?php esc_attr_e( 'Activer le thème sombre', 'dsa' ); ?>" aria-pressed="false" data-label-light="<?php esc_attr_e( 'Activer le thème clair', 'dsa' ); ?>" data-label-dark="<?php esc_attr_e( 'Activer le thème sombre', 'dsa' ); ?>"><span class="dashicons dashicons-lightbulb" aria-hidden="true"></span><span class="dsa-theme-label"><?php esc_html_e( 'Apparence', 'dsa' ); ?></span></button><?php require DSA_PLUGIN_DIR . 'views/partials/header-tools.php'; ?></div>
+		</header>
+		<section class="dsa-content dsa-logs-content" data-dsa-logs-page>
+			<p class="dsa-planner-notice"><span class="dashicons dashicons-info-outline" aria-hidden="true"></span><?php esc_html_e( 'Prototype : les exécutions affichées sont des fixtures déterministes. Les alertes et réglages sont enregistrés dans WordPress; les runs de démonstration ne déclenchent aucun e-mail.', 'dsa' ); ?></p>
+			<nav class="dsa-log-tabs" role="tablist" aria-label="<?php esc_attr_e( 'Journaux et notifications', 'dsa' ); ?>">
+				<button id="dsa-tab-journal" type="button" role="tab" aria-selected="true" aria-controls="dsa-panel-journal" tabindex="0" data-log-tab="journal"><?php esc_html_e( 'Exécutions', 'dsa' ); ?></button>
+				<button id="dsa-tab-settings" type="button" role="tab" aria-selected="false" aria-controls="dsa-panel-settings" tabindex="-1" data-log-tab="settings"><?php esc_html_e( 'Réglages de notification', 'dsa' ); ?></button>
+				<button id="dsa-tab-digest" type="button" role="tab" aria-selected="false" aria-controls="dsa-panel-digest" tabindex="-1" data-log-tab="digest"><?php esc_html_e( 'Digest e-mail', 'dsa' ); ?></button>
+			</nav>
+			<section class="dsa-log-panel" id="dsa-panel-journal" data-log-panel="journal" role="tabpanel" aria-labelledby="dsa-tab-journal" tabindex="0">
+				<form class="dsa-log-filters" data-log-filters>
+					<label><span><?php esc_html_e( 'Niveau', 'dsa' ); ?></span><select name="level"><option value=""><?php esc_html_e( 'Tous', 'dsa' ); ?></option><option value="info">Info</option><option value="warning"><?php esc_html_e( 'Avertissement', 'dsa' ); ?></option><option value="error"><?php esc_html_e( 'Erreur', 'dsa' ); ?></option></select></label>
+					<label><span><?php esc_html_e( 'Module', 'dsa' ); ?></span><select name="module"><option value=""><?php esc_html_e( 'Tous', 'dsa' ); ?></option><option value="scraper">Scraper</option><option value="scoring">Scoring</option><option value="catalogue">Catalogue</option><option value="notification"><?php esc_html_e( 'Notification', 'dsa' ); ?></option></select></label>
+					<label><span><?php esc_html_e( 'Workflow', 'dsa' ); ?></span><select name="workflow"><option value=""><?php esc_html_e( 'Tous', 'dsa' ); ?></option><option value="social_scan"><?php esc_html_e( 'Collecte sociale', 'dsa' ); ?></option><option value="product_scoring"><?php esc_html_e( 'Évaluation produits', 'dsa' ); ?></option><option value="catalog_sync"><?php esc_html_e( 'Synchronisation catalogue', 'dsa' ); ?></option></select></label>
+					<label><span><?php esc_html_e( 'Période', 'dsa' ); ?></span><select name="days"><option value="7">7 <?php esc_html_e( 'jours', 'dsa' ); ?></option><option value="30" selected>30 <?php esc_html_e( 'jours', 'dsa' ); ?></option><option value="90">90 <?php esc_html_e( 'jours', 'dsa' ); ?></option><option value="365">365 <?php esc_html_e( 'jours', 'dsa' ); ?></option></select></label>
+					<button class="dsa-button dsa-button-primary" type="submit"><span class="dashicons dashicons-filter" aria-hidden="true"></span><?php esc_html_e( 'Filtrer', 'dsa' ); ?></button>
+					<button class="dsa-button dsa-button-secondary" type="button" data-log-export><span class="dashicons dashicons-download" aria-hidden="true"></span><?php esc_html_e( 'Exporter CSV', 'dsa' ); ?></button>
+				</form>
+				<div class="dsa-table-wrap"><table class="dsa-table dsa-log-table"><thead><tr><th><?php esc_html_e( 'Exécution', 'dsa' ); ?></th><th><?php esc_html_e( 'Workflow / module', 'dsa' ); ?></th><th><?php esc_html_e( 'Début UTC', 'dsa' ); ?></th><th><?php esc_html_e( 'Durée', 'dsa' ); ?></th><th><?php esc_html_e( 'Résultat', 'dsa' ); ?></th><th><?php esc_html_e( 'Trouvés / ajoutés', 'dsa' ); ?></th><th><?php esc_html_e( 'Détail', 'dsa' ); ?></th></tr></thead><tbody data-log-rows><tr><td colspan="7"><?php esc_html_e( 'Chargement des journaux…', 'dsa' ); ?></td></tr></tbody></table></div>
+				<div class="dsa-log-pagination"><span data-log-total aria-live="polite"></span><div><button class="dsa-button dsa-button-quiet" type="button" data-log-previous disabled><?php esc_html_e( 'Précédent', 'dsa' ); ?></button><span data-log-page>1 / 1</span><button class="dsa-button dsa-button-quiet" type="button" data-log-next disabled><?php esc_html_e( 'Suivant', 'dsa' ); ?></button></div></div>
+				<p class="dsa-inline-note"><?php esc_html_e( 'La purge automatique conserve les alertes selon la rétention choisie. Les runs de démonstration, générés depuis les fixtures, ne sont pas supprimés.', 'dsa' ); ?></p>
+			</section>
+			<section class="dsa-log-panel" id="dsa-panel-settings" data-log-panel="settings" role="tabpanel" aria-labelledby="dsa-tab-settings" tabindex="0" hidden>
+				<form class="dsa-notification-settings" data-notification-settings>
+					<fieldset><legend><?php esc_html_e( 'Canal e-mail', 'dsa' ); ?></legend><label class="dsa-check-field"><input type="checkbox" name="email_enabled"><span><?php esc_html_e( 'Activer l’envoi via wp_mail', 'dsa' ); ?></span></label><label class="dsa-field"><span><?php esc_html_e( 'Destinataire', 'dsa' ); ?></span><select name="recipient_mode"><option value="admin"><?php esc_html_e( 'E-mail administrateur WordPress', 'dsa' ); ?></option><option value="custom"><?php esc_html_e( 'Adresse personnalisée', 'dsa' ); ?></option></select></label><label class="dsa-field"><span><?php esc_html_e( 'Adresse personnalisée', 'dsa' ); ?></span><input type="email" name="email" autocomplete="email"></label></fieldset>
+					<fieldset><legend><?php esc_html_e( 'Canaux webhook (préparés, non envoyés)', 'dsa' ); ?></legend><div class="dsa-field"><label for="dsa-webhook-slack">Slack · HTTPS</label><input id="dsa-webhook-slack" type="url" name="webhook_slack" placeholder="https://…"><small data-webhook-state="slack"></small><label class="dsa-check-field"><input type="checkbox" name="clear_slack"><span><?php esc_html_e( 'Effacer le webhook Slack enregistré', 'dsa' ); ?></span></label></div><div class="dsa-field"><label for="dsa-webhook-telegram">Telegram · HTTPS</label><input id="dsa-webhook-telegram" type="url" name="webhook_telegram" placeholder="https://…"><small data-webhook-state="telegram"></small><label class="dsa-check-field"><input type="checkbox" name="clear_telegram"><span><?php esc_html_e( 'Effacer le webhook Telegram enregistré', 'dsa' ); ?></span></label></div></fieldset>
+					<fieldset><legend><?php esc_html_e( 'Événements', 'dsa' ); ?></legend><?php foreach ( array( 'run_completed' => __( 'Fin d’exécution', 'dsa' ), 'run_failed' => __( 'Échec', 'dsa' ), 'product_pending' => __( 'Produit en attente de validation', 'dsa' ), 'provider_unavailable' => __( 'Provider IA indisponible', 'dsa' ) ) as $event => $label ) : ?><label class="dsa-check-field"><input type="checkbox" name="events[]" value="<?php echo esc_attr( $event ); ?>"><span><?php echo esc_html( $label ); ?></span></label><?php endforeach; ?></fieldset>
+					<fieldset><legend><?php esc_html_e( 'Fréquence et conservation', 'dsa' ); ?></legend><label class="dsa-field"><span><?php esc_html_e( 'Fréquence', 'dsa' ); ?></span><select name="frequency"><option value="immediate"><?php esc_html_e( 'Immédiate', 'dsa' ); ?></option><option value="digest"><?php esc_html_e( 'Digest par exécution', 'dsa' ); ?></option></select></label><label class="dsa-field"><span><?php esc_html_e( 'Rétention des alertes (jours)', 'dsa' ); ?></span><input type="number" name="retention_days" min="1" max="365" value="30"></label></fieldset>
+					<div class="dsa-log-actions"><p class="dsa-inline-note" data-settings-status role="status"></p><button class="dsa-button dsa-button-primary" type="submit"><?php esc_html_e( 'Enregistrer les réglages', 'dsa' ); ?></button><button class="dsa-button dsa-button-secondary" type="button" data-test-email><?php esc_html_e( 'Envoyer un e-mail de test', 'dsa' ); ?></button><button class="dsa-button dsa-button-quiet" type="button" data-purge-notifications><?php esc_html_e( 'Purger les alertes expirées', 'dsa' ); ?></button></div>
+				</form>
+			</section>
+			<section class="dsa-log-panel" id="dsa-panel-digest" data-log-panel="digest" role="tabpanel" aria-labelledby="dsa-tab-digest" tabindex="0" hidden>
+				<div class="dsa-digest-intro"><div><p class="dsa-eyebrow"><?php esc_html_e( 'APERÇU', 'dsa' ); ?></p><h2><?php esc_html_e( 'Digest de fin d’exécution', 'dsa' ); ?></h2><p><?php esc_html_e( 'Le modèle affiche les produits trouvés, évalués et ajoutés pour validation, les scores et un résumé d’erreurs sans détails sensibles.', 'dsa' ); ?></p></div><button class="dsa-button dsa-button-primary" type="button" data-open-digest><?php esc_html_e( 'Prévisualiser le modèle', 'dsa' ); ?></button></div>
+			</section>
+		</section>
+	</main>
+	<div class="dsa-toast-region" role="status" aria-live="polite" aria-atomic="false"></div>
+</div>
+<dialog class="dsa-detail-dialog" data-log-detail-dialog aria-labelledby="dsa-detail-title"><button class="dsa-icon-button dsa-dialog-close" type="button" data-close-dialog aria-label="<?php esc_attr_e( 'Fermer', 'dsa' ); ?>"><span class="dashicons dashicons-no-alt" aria-hidden="true"></span></button><p class="dsa-eyebrow"><?php esc_html_e( 'DÉTAIL D’EXÉCUTION', 'dsa' ); ?></p><h2 id="dsa-detail-title" data-detail-title></h2><div data-detail-body></div></dialog>
+<dialog class="dsa-preview-dialog" data-digest-dialog aria-labelledby="dsa-preview-title"><button class="dsa-icon-button dsa-dialog-close" type="button" data-close-dialog aria-label="<?php esc_attr_e( 'Fermer', 'dsa' ); ?>"><span class="dashicons dashicons-no-alt" aria-hidden="true"></span></button><h2 id="dsa-preview-title"><?php esc_html_e( 'Aperçu du digest', 'dsa' ); ?></h2><iframe title="<?php esc_attr_e( 'Aperçu du modèle d’e-mail', 'dsa' ); ?>" sandbox="" data-digest-frame></iframe></dialog>

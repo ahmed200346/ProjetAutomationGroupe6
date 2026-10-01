@@ -1,0 +1,22 @@
+services:
+  playwright:
+    build:
+      context: ./playwright-service
+    container_name: playwright_scrapper
+    restart: unless-stopped
+    environment:
+      API_KEY: ${PLAYWRIGHT_API_KEY:?Set PLAYWRIGHT_API_KEY in the local .env file}
+      WORDPRESS_RESULTS_URL: ${WORDPRESS_RESULTS_URL:-}
+      WORDPRESS_RESULTS_TOKEN: ${WORDPRESS_RESULTS_TOKEN:-}
+    ports:
+      - "127.0.0.1:3000:3000"
+    shm_size: "1gb"
+    networks:
+      - automation
+
+    
+networks:
+  automation:
+    external: true
+    name: n8n_automation
+      

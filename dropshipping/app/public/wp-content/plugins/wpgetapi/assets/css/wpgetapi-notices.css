@@ -1,0 +1,119 @@
+/* CSS for adverts */
+
+.wpgetapi_notice_container {
+	height: auto;
+	overflow: hidden;
+}
+
+.wpgetapi_review_notice_container {
+	padding: 12px;
+	display: flex;
+}
+
+.wpgetapi_advert_button_container {
+	margin-bottom: 10px;
+	display: flex;
+	align-items: center;
+}
+
+.wpgetapi_advert_button_container .dashicons {
+	margin-left: 10px;
+}
+
+.wpgetapi_advert_content_left {
+	float: none;
+	width: 65px;
+	padding-top: 9px;
+	margin-right: 9px;
+}
+
+.wpgetapi_advert_content_left_extra {
+	float: none;
+	width: 100px;
+	padding-right: 15px;
+	display: flex;
+	align-items: center;
+}
+
+.updraft_advert_content_left img {
+	min-height: 72px;
+	min-width: 72px;
+}
+
+.wpgetapi_advert_content_right {
+	float: none;
+	width: auto;
+	overflow: hidden;
+	font-size: 16px;
+}
+
+.updraft_advert_content_right p {
+	font-size: 16px !important;
+}
+
+.wpgetapi_advert_bottom {
+	margin: 10px 0;
+	padding: 10px;
+	font-size: 140%;
+	background-color: rgb(255, 255, 255);
+	border-color: #E6DB55;
+	border: 1px solid;
+	border-radius: 4px;
+}
+
+.wpgetapi_advert_dismiss {
+	float: right;
+	font-size: 13px;
+	font-weight: normal;
+}
+
+h3.wpgetapi_advert_heading {
+	margin-top: 5px !important;
+	margin-bottom: 5px !important;
+}
+
+h4.wpgetapi_advert_heading {
+	margin-top: 2px !important;
+	margin-bottom: 3px !important;
+}
+
+.wpgetapi_center_content {
+	text-align: center;
+	margin-bottom: 5px;
+}
+
+.wpgetapi_text_center {
+	text-align: center;
+}
+
+#wpgetapi-dashnotice #wpgetapi-dashnotice_wrapper ul {
+	list-style: disc inside;
+	text-indent: -18px;
+	margin-left: 18px;
+}
+
+@media screen and (min-width: 560px) {
+
+	.wpgetapi_advert_content_left, .wpgetapi_advert_content_left_extra {
+		float: left;
+	}
+
+}
+
+#wpgetapi-notice-logo {
+	border: 0;
+	float: right;
+	width: 150px;
+	height: auto;
+	margin: 10px;
+}
+
+@media (min-width: 768px) {
+
+	#wpgetapi-notice-logo {
+		width: 250px;
+		height: auto;
+		margin: 110px 15px;
+	}
+
+}

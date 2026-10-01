@@ -1,0 +1,899 @@
+/**
+ * RawCooked AI Chatbot — widget styles.
+ * Theming via CSS variables (set inline by the plugin):
+ *   --rafiq-primary : main color
+ *   --rafiq-radius  : corner radius (round / soft / square)
+ */
+
+:root {
+	--rafiq-primary: #c8402f;
+	--rafiq-grad2: #7c3aed;
+	--rafiq-radius: 22px;
+}
+
+.rafiq-root,
+.rafiq-inline {
+	--rafiq-bg: #ffffff;
+	--rafiq-text: #1f2328;
+	--rafiq-muted: #6b7280;
+	--rafiq-surface: #f3f4f6;
+	--rafiq-border: #e5e7eb;
+	--rafiq-input-border: #d1d5db;
+	--rafiq-header-bg: var(--rafiq-primary);
+	--rafiq-header-text: #ffffff;
+	--rafiq-user-bg: var(--rafiq-primary);
+	--rafiq-user-text: #ffffff;
+	--rafiq-launcher-bg: var(--rafiq-primary);
+	--rafiq-assist-bg: var(--rafiq-bg);
+	--rafiq-shadow: 0 12px 40px rgba(0, 0, 0, 0.18);
+	--rafiq-font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+/* ------------------------------------------------------------------ *
+ * Themes
+ * ------------------------------------------------------------------ */
+
+/* Midnight — dark mode. */
+.rafiq-theme-midnight {
+	--rafiq-bg: #1e2430;
+	--rafiq-text: #e8eaf0;
+	--rafiq-muted: #9aa3b5;
+	--rafiq-surface: #161b26;
+	--rafiq-border: #303a4d;
+	--rafiq-input-border: #3a4560;
+	--rafiq-header-bg: #10141d;
+	--rafiq-header-text: #e8eaf0;
+	--rafiq-assist-bg: #262e3e;
+	--rafiq-shadow: 0 12px 40px rgba(0, 0, 0, 0.55);
+}
+
+/* Glass — translucent, blurred. */
+.rafiq-theme-glass {
+	--rafiq-bg: rgba(255, 255, 255, 0.72);
+	--rafiq-surface: rgba(255, 255, 255, 0.35);
+	--rafiq-border: rgba(255, 255, 255, 0.55);
+	--rafiq-input-border: rgba(0, 0, 0, 0.12);
+	--rafiq-header-bg: color-mix(in srgb, var(--rafiq-primary) 82%, transparent);
+	--rafiq-assist-bg: rgba(255, 255, 255, 0.8);
+}
+
+.rafiq-theme-glass .rafiq-panel,
+.rafiq-theme-glass.rafiq-inline .rafiq-chat--inline {
+	backdrop-filter: blur(var(--rafiq-glass-blur, 18px)) saturate(1.4);
+	-webkit-backdrop-filter: blur(var(--rafiq-glass-blur, 18px)) saturate(1.4);
+}
+
+/* Gradient — vivid two-color identity. */
+.rafiq-theme-gradient {
+	--rafiq-header-bg: linear-gradient(135deg, var(--rafiq-primary), var(--rafiq-grad2));
+	--rafiq-user-bg: linear-gradient(135deg, var(--rafiq-primary), var(--rafiq-grad2));
+	--rafiq-launcher-bg: linear-gradient(135deg, var(--rafiq-primary), var(--rafiq-grad2));
+}
+
+/* Minimal — quiet, bordered, header on white. */
+.rafiq-theme-minimal {
+	--rafiq-header-bg: var(--rafiq-bg);
+	--rafiq-header-text: var(--rafiq-text);
+	--rafiq-surface: #fafafa;
+	--rafiq-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+}
+
+.rafiq-theme-minimal .rafiq-chat__header { border-bottom: 1px solid var(--rafiq-border); }
+.rafiq-theme-minimal .rafiq-chat__avatar { background: var(--rafiq-surface); }
+.rafiq-theme-minimal .rafiq-panel__close { color: var(--rafiq-text); background: var(--rafiq-surface); }
+.rafiq-theme-minimal .rafiq-chat__status { color: var(--rafiq-muted); }
+
+/* ------------------------------------------------------------------ *
+ * Root containers
+ * ------------------------------------------------------------------ */
+
+.rafiq-root {
+	position: fixed;
+	z-index: 999999;
+	bottom: 20px;
+	font-family: var(--rafiq-font);
+	-webkit-font-smoothing: antialiased;
+}
+
+.rafiq-root--right { right: 20px; }
+.rafiq-root--left { left: 20px; }
+
+/* ------------------------------------------------------------------ *
+ * Launcher — bubble mode
+ * ------------------------------------------------------------------ */
+
+.rafiq-root--bubble .rafiq-launcher {
+	display: grid;
+	place-items: center;
+	width: 60px;
+	height: 60px;
+	border: none;
+	cursor: pointer;
+	color: #fff;
+	background: var(--rafiq-launcher-bg);
+	border-radius: calc(var(--rafiq-radius) * 1.4 + 6px);
+	box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+	transition: transform 0.18s ease, box-shadow 0.18s ease;
+	position: relative;
+}
+
+.rafiq-root--bubble .rafiq-launcher:hover {
+	transform: scale(1.07);
+	box-shadow: 0 10px 26px rgba(0, 0, 0, 0.3);
+}
+
+.rafiq-launcher__icon {
+	grid-area: 1 / 1;
+	display: grid;
+	place-items: center;
+	transition: opacity 0.18s ease, transform 0.25s ease;
+}
+
+.rafiq-launcher__icon--close { opacity: 0; transform: rotate(-90deg) scale(0.4); }
+.rafiq-root.is-open .rafiq-launcher__icon--chat { opacity: 0; transform: rotate(90deg) scale(0.4); }
+.rafiq-root.is-open .rafiq-launcher__icon--close { opacity: 1; transform: rotate(0) scale(1); }
+
+/* ------------------------------------------------------------------ *
+ * Launcher — sidebar mode (edge tab)
+ * ------------------------------------------------------------------ */
+
+.rafiq-root--sidebar {
+	bottom: auto;
+	top: 50%;
+}
+
+.rafiq-root--sidebar .rafiq-launcher {
+	position: fixed;
+	top: 50%;
+	border: none;
+	cursor: pointer;
+	color: #fff;
+	background: var(--rafiq-launcher-bg);
+	padding: 14px 10px;
+	box-shadow: 0 4px 16px rgba(0, 0, 0, 0.22);
+	transition: padding 0.15s ease, opacity 0.2s ease;
+}
+
+.rafiq-root--sidebar.rafiq-root--right .rafiq-launcher {
+	right: 0;
+	transform: translateY(-50%);
+	border-radius: var(--rafiq-radius) 0 0 var(--rafiq-radius);
+}
+
+.rafiq-root--sidebar.rafiq-root--left .rafiq-launcher {
+	left: 0;
+	transform: translateY(-50%);
+	border-radius: 0 var(--rafiq-radius) var(--rafiq-radius) 0;
+}
+
+.rafiq-root--sidebar .rafiq-launcher:hover { padding-left: 16px; padding-right: 16px; }
+.rafiq-root--sidebar.is-open .rafiq-launcher { opacity: 0; pointer-events: none; }
+
+.rafiq-launcher__tab {
+	writing-mode: vertical-rl;
+	text-orientation: mixed;
+	font-size: 14px;
+	font-weight: 600;
+	letter-spacing: 0.04em;
+}
+
+/* ------------------------------------------------------------------ *
+ * Panel
+ * ------------------------------------------------------------------ */
+
+.rafiq-panel {
+	position: absolute;
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+	background: var(--rafiq-bg);
+	border-radius: var(--rafiq-radius);
+	box-shadow: var(--rafiq-shadow);
+	opacity: 0;
+	pointer-events: none;
+}
+
+/* Bubble: pops out of the corner. */
+.rafiq-root--bubble .rafiq-panel {
+	bottom: 76px;
+	width: 380px;
+	max-width: calc(100vw - 40px);
+	height: 560px;
+	max-height: calc(100vh - 120px);
+	transform: translateY(14px) scale(0.92);
+	transition: opacity 0.22s ease, transform 0.22s cubic-bezier(0.34, 1.4, 0.64, 1);
+}
+
+.rafiq-root--bubble.rafiq-root--right .rafiq-panel { right: 0; transform-origin: bottom right; }
+.rafiq-root--bubble.rafiq-root--left .rafiq-panel { left: 0; transform-origin: bottom left; }
+
+/* Sidebar: full height, slides from the edge. */
+.rafiq-root--sidebar .rafiq-panel {
+	position: fixed;
+	top: 0;
+	bottom: 0;
+	width: 400px;
+	max-width: 100vw;
+	height: 100%;
+	border-radius: 0;
+	transition: opacity 0.25s ease, transform 0.28s ease;
+}
+
+.rafiq-root--sidebar.rafiq-root--right .rafiq-panel { right: 0; transform: translateX(100%); }
+.rafiq-root--sidebar.rafiq-root--left .rafiq-panel { left: 0; transform: translateX(-100%); }
+
+.rafiq-root.is-open .rafiq-panel {
+	opacity: 1;
+	pointer-events: auto;
+	transform: translate(0, 0) scale(1);
+}
+
+/* ------------------------------------------------------------------ *
+ * Mobile — two layouts: "full" takes the whole screen, "half" is a
+ * bottom sheet that leaves the site visible above.
+ * ------------------------------------------------------------------ */
+@media (max-width: 520px) {
+	.rafiq-root { bottom: calc(16px + env(safe-area-inset-bottom, 0px)); }
+	.rafiq-root--right { right: 16px; }
+	.rafiq-root--left { left: 16px; }
+
+	.rafiq-mlayout-full.rafiq-root--bubble .rafiq-panel {
+		position: fixed;
+		inset: 0;
+		width: 100%;
+		height: 100%;
+		max-width: none;
+		max-height: none;
+		border-radius: 0;
+	}
+
+	.rafiq-mlayout-half.rafiq-root--bubble .rafiq-panel {
+		position: fixed;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		top: auto;
+		width: 100%;
+		max-width: none;
+		height: min(60vh, 560px);
+		max-height: none;
+		border-radius: 18px 18px 0 0;
+		padding-bottom: env(safe-area-inset-bottom, 0px);
+	}
+
+	/* Grab-handle hint on the bottom sheet. */
+	.rafiq-mlayout-half.rafiq-root--bubble .rafiq-chat__header::after {
+		content: "";
+		position: absolute;
+		top: 6px;
+		left: 50%;
+		transform: translateX(-50%);
+		width: 44px;
+		height: 4px;
+		border-radius: 2px;
+		background: rgba(255, 255, 255, 0.45);
+	}
+
+	/* 16px stops iOS from zooming into the field. */
+	.rafiq-chat__input { font-size: 16px !important; }
+}
+
+/* ------------------------------------------------------------------ *
+ * Chat (shared: panel + inline)
+ * ------------------------------------------------------------------ */
+
+.rafiq-chat {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	min-height: 0;
+	color: var(--rafiq-text);
+	font-size: 15px;
+	line-height: 1.5;
+}
+
+.rafiq-chat--inline {
+	height: 600px;
+	max-height: 80vh;
+	border: 1px solid var(--rafiq-border);
+	border-radius: var(--rafiq-radius);
+	overflow: hidden;
+	box-shadow: 0 4px 18px rgba(0, 0, 0, 0.07);
+	font-family: var(--rafiq-font);
+}
+
+.rafiq-chat__header {
+	position: relative;
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 14px 16px;
+	background: var(--rafiq-header-bg);
+	color: var(--rafiq-header-text);
+	flex-shrink: 0;
+}
+
+.rafiq-chat__avatar {
+	display: grid;
+	place-items: center;
+	width: 38px;
+	height: 38px;
+	font-size: 20px;
+	background: rgba(255, 255, 255, 0.18);
+	border-radius: calc(var(--rafiq-radius) * 0.8 + 4px);
+}
+
+.rafiq-chat__title { display: flex; flex-direction: column; min-width: 0; }
+.rafiq-chat__title strong { font-size: 15px; }
+
+.rafiq-chat__status { font-size: 12px; opacity: 0.85; }
+.rafiq-chat__status::before {
+	content: "";
+	display: inline-block;
+	width: 7px;
+	height: 7px;
+	margin-right: 5px;
+	border-radius: 50%;
+	background: #4ade80;
+	vertical-align: middle;
+}
+
+.rafiq-panel__close {
+	margin-left: auto;
+	display: grid;
+	place-items: center;
+	width: 32px;
+	height: 32px;
+	border: none;
+	cursor: pointer;
+	color: #fff;
+	background: rgba(255, 255, 255, 0.15);
+	border-radius: 50%;
+	transition: background 0.15s ease;
+}
+.rafiq-panel__close:hover { background: rgba(255, 255, 255, 0.3); }
+
+.rafiq-chat__messages {
+	flex: 1;
+	min-height: 0;
+	overflow-y: auto;
+	padding: 16px;
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	background:
+		radial-gradient(circle at 20% 0%, color-mix(in srgb, var(--rafiq-primary) 5%, transparent), transparent 60%),
+		var(--rafiq-surface);
+	overscroll-behavior: contain;
+}
+
+.rafiq-msg { display: flex; flex-direction: column; max-width: 85%; }
+.rafiq-msg--user { align-self: flex-end; align-items: flex-end; }
+.rafiq-msg--assistant { align-self: flex-start; align-items: flex-start; }
+
+.rafiq-msg--in { animation: rafiq-pop 0.25s ease; }
+@keyframes rafiq-pop {
+	from { opacity: 0; transform: translateY(8px); }
+	to { opacity: 1; transform: translateY(0); }
+}
+
+.rafiq-msg__bubble {
+	padding: 10px 14px;
+	border-radius: var(--rafiq-radius);
+	word-wrap: break-word;
+	overflow-wrap: break-word;
+}
+
+.rafiq-msg--user .rafiq-msg__bubble {
+	background: var(--rafiq-user-bg);
+	color: var(--rafiq-user-text);
+	border-bottom-right-radius: 4px;
+}
+
+.rafiq-msg--assistant .rafiq-msg__bubble {
+	background: var(--rafiq-assist-bg);
+	border: 1px solid var(--rafiq-border);
+	border-bottom-left-radius: 4px;
+}
+
+.rafiq-msg__bubble a { color: var(--rafiq-primary); font-weight: 600; }
+.rafiq-msg__bubble ul { margin: 6px 0; padding-left: 18px; }
+.rafiq-msg__bubble li { margin: 2px 0; }
+
+.rafiq-msg__sources {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 6px;
+	margin-top: 6px;
+}
+
+.rafiq-msg__sources-label { font-size: 12px; color: var(--rafiq-muted); }
+
+.rafiq-chip {
+	display: inline-block;
+	max-width: 220px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	padding: 4px 10px;
+	font-size: 12px;
+	font-weight: 600;
+	text-decoration: none;
+	color: var(--rafiq-primary);
+	background: color-mix(in srgb, var(--rafiq-primary) 12%, var(--rafiq-bg));
+	border: 1px solid color-mix(in srgb, var(--rafiq-primary) 32%, var(--rafiq-bg));
+	border-radius: calc(var(--rafiq-radius) * 0.6 + 2px);
+	transition: background 0.15s ease;
+}
+.rafiq-chip:hover { background: color-mix(in srgb, var(--rafiq-primary) 20%, var(--rafiq-bg)); }
+
+/* Typing indicator. */
+.rafiq-typing { display: inline-flex; gap: 5px; padding: 14px 16px; }
+.rafiq-typing span {
+	width: 7px;
+	height: 7px;
+	border-radius: 50%;
+	background: var(--rafiq-muted);
+	animation: rafiq-blink 1.2s infinite ease-in-out;
+}
+.rafiq-typing span:nth-child(2) { animation-delay: 0.15s; }
+.rafiq-typing span:nth-child(3) { animation-delay: 0.3s; }
+@keyframes rafiq-blink {
+	0%, 60%, 100% { opacity: 0.25; transform: translateY(0); }
+	30% { opacity: 1; transform: translateY(-3px); }
+}
+
+/* Composer. */
+.rafiq-chat__composer {
+	display: flex;
+	align-items: flex-end;
+	gap: 8px;
+	padding: 12px;
+	background: var(--rafiq-bg);
+	border-top: 1px solid var(--rafiq-border);
+	flex-shrink: 0;
+}
+
+.rafiq-chat__input {
+	flex: 1;
+	resize: none;
+	border: 1px solid var(--rafiq-input-border);
+	border-radius: calc(var(--rafiq-radius) * 0.8 + 4px);
+	padding: 10px 14px;
+	font: inherit;
+	color: inherit;
+	background: var(--rafiq-surface);
+	max-height: 120px;
+	outline: none;
+	transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.rafiq-chat__input:focus {
+	border-color: var(--rafiq-primary);
+	box-shadow: 0 0 0 3px color-mix(in srgb, var(--rafiq-primary) 18%, transparent);
+	background: var(--rafiq-bg);
+}
+
+.rafiq-chat__send {
+	display: grid;
+	place-items: center;
+	width: 42px;
+	height: 42px;
+	border: none;
+	cursor: pointer;
+	color: #fff;
+	background: var(--rafiq-launcher-bg);
+	border-radius: calc(var(--rafiq-radius) * 0.8 + 4px);
+	transition: transform 0.12s ease, filter 0.12s ease;
+	flex-shrink: 0;
+}
+
+.rafiq-chat__send:hover { filter: brightness(1.08); transform: scale(1.05); }
+.rafiq-chat__send:active { transform: scale(0.95); }
+
+/* ------------------------------------------------------------------ *
+ * Quick replies (suggested questions)
+ * ------------------------------------------------------------------ */
+
+.rafiq-quick {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+	margin-top: 2px;
+}
+
+.rafiq-quick__chip {
+	cursor: pointer;
+	padding: 7px 12px;
+	font-size: 13px;
+	font-weight: 600;
+	font-family: inherit;
+	color: var(--rafiq-primary);
+	background: var(--rafiq-assist-bg);
+	border: 1px solid color-mix(in srgb, var(--rafiq-primary) 40%, var(--rafiq-bg));
+	border-radius: calc(var(--rafiq-radius) * 0.8 + 4px);
+	transition: background 0.15s ease, transform 0.12s ease;
+}
+
+.rafiq-quick__chip:hover {
+	background: color-mix(in srgb, var(--rafiq-primary) 12%, var(--rafiq-bg));
+	transform: translateY(-1px);
+}
+
+/* ------------------------------------------------------------------ *
+ * Lead capture gate
+ * ------------------------------------------------------------------ */
+
+.rafiq-lead {
+	position: absolute;
+	inset: 0;
+	z-index: 5;
+	display: grid;
+	place-items: center;
+	padding: 20px;
+	background: color-mix(in srgb, var(--rafiq-surface) 70%, transparent);
+	backdrop-filter: blur(4px);
+	-webkit-backdrop-filter: blur(4px);
+}
+
+.rafiq-lead__card {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	width: 100%;
+	max-width: 300px;
+	padding: 20px;
+	background: var(--rafiq-bg);
+	color: var(--rafiq-text);
+	border: 1px solid var(--rafiq-border);
+	border-radius: var(--rafiq-radius);
+	box-shadow: var(--rafiq-shadow);
+}
+
+.rafiq-lead__title {
+	margin: 0;
+	font-size: 14px;
+	font-weight: 600;
+	line-height: 1.4;
+}
+
+.rafiq-lead__input {
+	padding: 9px 12px;
+	font: inherit;
+	font-size: 14px;
+	color: var(--rafiq-text);
+	background: var(--rafiq-surface);
+	border: 1px solid var(--rafiq-input-border);
+	border-radius: calc(var(--rafiq-radius) * 0.6 + 3px);
+	outline: none;
+}
+
+.rafiq-lead__input:focus { border-color: var(--rafiq-primary); }
+.rafiq-lead__input.is-invalid { border-color: #dc2626; }
+
+.rafiq-lead__start {
+	cursor: pointer;
+	padding: 10px;
+	font: inherit;
+	font-size: 14px;
+	font-weight: 700;
+	color: #fff;
+	background: var(--rafiq-launcher-bg);
+	border: none;
+	border-radius: calc(var(--rafiq-radius) * 0.6 + 3px);
+	transition: filter 0.12s ease;
+}
+
+.rafiq-lead__start:hover { filter: brightness(1.08); }
+
+.rafiq-lead__skip {
+	cursor: pointer;
+	border: none;
+	background: none;
+	font: inherit;
+	font-size: 12px;
+	color: var(--rafiq-muted);
+	text-decoration: underline;
+}
+
+/* The lead overlay needs a positioned ancestor in both mounts. */
+.rafiq-chat { position: relative; }
+
+/* ------------------------------------------------------------------ *
+ * Entry/exit animation styles (setting: pop | slide | fade | bounce)
+ * ------------------------------------------------------------------ */
+
+.rafiq-anim-slide.rafiq-root--bubble .rafiq-panel {
+	transform: translateY(42px);
+	transition: opacity 0.25s ease, transform 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.rafiq-anim-fade.rafiq-root--bubble .rafiq-panel {
+	transform: none;
+	transition: opacity 0.3s ease;
+}
+
+.rafiq-anim-bounce.rafiq-root--bubble.is-open .rafiq-panel {
+	animation: rafiq-bounce-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes rafiq-bounce-in {
+	0% { transform: translateY(26px) scale(0.85); opacity: 0; }
+	60% { transform: translateY(-8px) scale(1.02); opacity: 1; }
+	100% { transform: none; }
+}
+
+/* ------------------------------------------------------------------ *
+ * Teaser speech bubble next to the launcher
+ * ------------------------------------------------------------------ */
+
+.rafiq-teaser {
+	position: absolute;
+	bottom: 8px;
+	display: flex;
+	align-items: flex-start;
+	gap: 4px;
+	max-width: 260px;
+	animation: rafiq-teaser-in 0.35s cubic-bezier(0.34, 1.4, 0.64, 1);
+}
+
+.rafiq-root--right .rafiq-teaser { right: 72px; }
+.rafiq-root--left .rafiq-teaser { left: 72px; }
+
+.rafiq-teaser__text {
+	cursor: pointer;
+	padding: 11px 14px;
+	font-family: var(--rafiq-font);
+	font-size: 14px;
+	font-weight: 500;
+	line-height: 1.4;
+	text-align: left;
+	color: var(--rafiq-text);
+	background: var(--rafiq-assist-bg);
+	border: 1px solid var(--rafiq-border);
+	border-radius: var(--rafiq-radius);
+	border-bottom-right-radius: 4px;
+	box-shadow: 0 6px 24px rgba(0, 0, 0, 0.16);
+	transition: transform 0.12s ease;
+}
+
+.rafiq-root--left .rafiq-teaser__text {
+	border-bottom-right-radius: var(--rafiq-radius);
+	border-bottom-left-radius: 4px;
+}
+
+.rafiq-teaser__text:hover { transform: translateY(-2px); }
+
+.rafiq-teaser__close {
+	cursor: pointer;
+	width: 20px;
+	height: 20px;
+	padding: 0;
+	display: grid;
+	place-items: center;
+	font-size: 14px;
+	line-height: 1;
+	color: var(--rafiq-muted);
+	background: var(--rafiq-assist-bg);
+	border: 1px solid var(--rafiq-border);
+	border-radius: 50%;
+	flex-shrink: 0;
+}
+
+@keyframes rafiq-teaser-in {
+	from { opacity: 0; transform: translateY(8px) scale(0.9); }
+	to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+#rafiq-root .rafiq-teaser__text,
+#rafiq-root .rafiq-teaser__close {
+	margin: 0 !important;
+	text-transform: none !important;
+	min-height: 0 !important;
+	box-shadow: 0 6px 24px rgba(0, 0, 0, 0.16) !important;
+	line-height: 1.4 !important;
+}
+
+/* ------------------------------------------------------------------ *
+ * Unread badge on the launcher
+ * ------------------------------------------------------------------ */
+
+.rafiq-badge {
+	position: absolute;
+	top: -4px;
+	right: -4px;
+	box-sizing: border-box;
+	min-width: 20px;
+	height: 20px;
+	padding: 0 5px;
+	display: grid;
+	place-items: center;
+	background: #ef4444;
+	color: #fff;
+	font-size: 11px;
+	font-weight: 700;
+	line-height: 1;
+	border-radius: 999px;
+	border: 2px solid #fff;
+	animation: rafiq-badge-pop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.rafiq-badge[hidden] { display: none; }
+
+@keyframes rafiq-badge-pop {
+	from { transform: scale(0); }
+	to { transform: scale(1); }
+}
+
+/* ------------------------------------------------------------------ *
+ * Avatar: custom image + reply hop
+ * ------------------------------------------------------------------ */
+
+.rafiq-chat__avatar { overflow: hidden; }
+
+.rafiq-chat__avatar-img {
+	display: block;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	border-radius: inherit;
+}
+
+.rafiq-chat__avatar.is-celebrating {
+	animation: rafiq-hop 0.45s ease 2;
+}
+
+@keyframes rafiq-hop {
+	0%, 100% { transform: none; }
+	40% { transform: translateY(-5px) rotate(-6deg); }
+	70% { transform: translateY(0) rotate(5deg); }
+}
+
+/* ------------------------------------------------------------------ *
+ * Hardening against site-theme CSS bleed.
+ * WordPress themes style bare <button>, <textarea>, <svg>… aggressively;
+ * these rules pin the widget's critical geometry and colors so the
+ * widget looks identical on every theme. Kept surgical: only the
+ * widget's own classes, only the properties themes typically break.
+ * ------------------------------------------------------------------ */
+
+#rafiq-root .rafiq-chat *,
+.rafiq-inline .rafiq-chat * { box-sizing: border-box; }
+
+#rafiq-root .rafiq-chat__input,
+.rafiq-inline .rafiq-chat__input {
+	width: auto !important;
+	min-height: 0 !important;
+	height: auto;
+	max-height: 120px !important;
+	margin: 0 !important;
+	padding: 10px 14px !important;
+	border: 1px solid var(--rafiq-input-border) !important;
+	border-radius: calc(var(--rafiq-radius) * 0.8 + 4px) !important;
+	background: var(--rafiq-surface) !important;
+	color: var(--rafiq-text) !important;
+	font-family: var(--rafiq-font) !important;
+	font-size: 15px;
+	line-height: 1.45 !important;
+	box-shadow: none !important;
+	-webkit-appearance: none;
+	appearance: none;
+}
+
+#rafiq-root .rafiq-chat__input:focus,
+.rafiq-inline .rafiq-chat__input:focus {
+	border-color: var(--rafiq-primary) !important;
+	background: var(--rafiq-bg) !important;
+	outline: none !important;
+	box-shadow: 0 0 0 3px color-mix(in srgb, var(--rafiq-primary) 18%, transparent) !important;
+}
+
+#rafiq-root .rafiq-chat__send,
+.rafiq-inline .rafiq-chat__send {
+	display: grid !important;
+	place-items: center;
+	width: 42px !important;
+	height: 42px !important;
+	min-width: 0 !important;
+	min-height: 0 !important;
+	margin: 0 !important;
+	padding: 0 !important;
+	border: none !important;
+	border-radius: calc(var(--rafiq-radius) * 0.8 + 4px) !important;
+	background: var(--rafiq-launcher-bg) !important;
+	color: #fff !important;
+	line-height: 0 !important;
+	text-transform: none !important;
+	box-shadow: none !important;
+	-webkit-appearance: none;
+	appearance: none;
+}
+
+#rafiq-root .rafiq-chat__send svg,
+.rafiq-inline .rafiq-chat__send svg {
+	display: inline-block !important;
+	width: 20px !important;
+	height: 20px !important;
+	fill: currentColor;
+}
+
+#rafiq-root .rafiq-launcher svg,
+#rafiq-root .rafiq-panel__close svg {
+	display: inline-block !important;
+	fill: currentColor;
+	max-width: none !important;
+}
+
+#rafiq-root .rafiq-panel__close {
+	margin: 0 0 0 auto !important;
+	padding: 0 !important;
+	width: 32px !important;
+	height: 32px !important;
+	min-height: 0 !important;
+	border: none !important;
+	line-height: 0 !important;
+	box-shadow: none !important;
+}
+
+#rafiq-root .rafiq-launcher {
+	line-height: 1 !important;
+	text-transform: none !important;
+	margin: 0 !important;
+}
+
+#rafiq-root.rafiq-root--bubble .rafiq-launcher { padding: 0 !important; }
+
+#rafiq-root .rafiq-quick__chip,
+.rafiq-inline .rafiq-quick__chip,
+#rafiq-root .rafiq-lead__start,
+.rafiq-inline .rafiq-lead__start,
+#rafiq-root .rafiq-lead__skip,
+.rafiq-inline .rafiq-lead__skip {
+	margin: 0 !important;
+	text-transform: none !important;
+	box-shadow: none !important;
+	min-height: 0 !important;
+	width: auto;
+	line-height: 1.3 !important;
+}
+
+/* Colors pinned so no theme (and no dark site) can break contrast. */
+#rafiq-root .rafiq-msg--assistant .rafiq-msg__bubble,
+.rafiq-inline .rafiq-msg--assistant .rafiq-msg__bubble {
+	color: var(--rafiq-text) !important;
+}
+
+#rafiq-root .rafiq-msg--user .rafiq-msg__bubble,
+.rafiq-inline .rafiq-msg--user .rafiq-msg__bubble {
+	color: var(--rafiq-user-text) !important;
+}
+
+#rafiq-root .rafiq-chat__header,
+.rafiq-inline .rafiq-chat__header {
+	color: var(--rafiq-header-text) !important;
+}
+
+#rafiq-root .rafiq-chat__header strong,
+.rafiq-inline .rafiq-chat__header strong {
+	color: inherit !important;
+	margin: 0 !important;
+}
+
+#rafiq-root .rafiq-msg__bubble a,
+.rafiq-inline .rafiq-msg__bubble a {
+	color: var(--rafiq-primary) !important;
+	text-decoration: underline;
+}
+
+#rafiq-root .rafiq-msg__bubble strong,
+#rafiq-root .rafiq-msg__bubble em,
+#rafiq-root .rafiq-msg__bubble li,
+.rafiq-inline .rafiq-msg__bubble strong,
+.rafiq-inline .rafiq-msg__bubble em,
+.rafiq-inline .rafiq-msg__bubble li {
+	color: inherit !important;
+}
+
+#rafiq-root .rafiq-msg__bubble p { margin: 0 0 6px; }
+#rafiq-root .rafiq-msg__bubble p:last-child { margin-bottom: 0; }

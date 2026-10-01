@@ -1,0 +1,13 @@
+{
+  "name": "dropshipping-playwright-service",
+  "version": "2.0.0",
+  "description": "Playwright scraping service for the dropshipping Research Agent",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^5.1.0",
+    "playwright": "1.63.0"
+  }
+}

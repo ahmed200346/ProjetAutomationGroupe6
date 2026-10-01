@@ -1,0 +1,514 @@
+{
+  "name": "AliExpress_Scrapper+score",
+  "nodes": [
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst output = [];\n\nfor (const item of items) {\n    const data = item.json;\n\n    const products = Array.isArray(data.products)\n        ? data.products\n        : [];\n\n    for (const product of products) {\n        output.push({\n            json: {\n                product_id: product.product_id || null,\n                title: product.name || \"\",\n                normalized_title: \"\",\n\n                price: product.price ?? null,\n                original_price: product.original_price ?? null,\n                currency: product.currency || null,\n\n                rating: product.rating ?? null,\n                sold: product.sold ?? null,\n                reviews: product.reviews ?? null,\n                shipping: product.shipping ?? null,\n\n                image_url: product.image || \"\",\n                product_url: product.url || \"\",\n\n                source: data.source || \"aliexpress\",\n                search_query: data.query || \"\"\n            }\n        });\n    }\n}\n\nreturn output;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        128,
+        144
+      ],
+      "id": "cfeced7c-0078-464d-a691-59268be296e8",
+      "name": "Normalize Products"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://openrouter.ai/api/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openRouterApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"stealth/space-bunny-alpha\",\n  \"temperature\": 0.1,\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"You are a product data cleaning and normalization system for an e-commerce product research pipeline.\\n\\nYour task is to transform noisy marketplace product titles into reliable, structured product information.\\n\\nIMPORTANT: The source title may contain Arabic, English, French, numbers, prices, ratings, sales counts, promotional text, and marketplace noise.\\n\\nRULES:\\n\\n1. LANGUAGE\\nTranslate non-English product information into concise, natural English when necessary.\\n\\n2. REMOVE MARKETPLACE NOISE\\nRemove all marketplace noise, including:\\n- prices\\n- currencies\\n- discounts\\n- percentage discounts\\n- ratings\\n- review counts\\n- sold counts\\n- shipping information\\n- seller information\\n- promotional phrases\\n- \\\"best seller\\\"\\n- \\\"best selling\\\"\\n- \\\"new customer\\\"\\n- \\\"new shopper\\\"\\n- \\\"free shipping\\\"\\n- \\\"limited offer\\\"\\n- \\\"AliExpress\\\" promotional text\\n- generic promotional words such as \\\"latest\\\" when they do not describe a product specification\\n\\nDo NOT remove genuine product specifications just because they contain numbers.\\n\\n3. PRESERVE EXPLICIT PRODUCT INFORMATION\\nPreserve information explicitly stated in the original title, including:\\n- product type\\n- brand\\n- model\\n- technology\\n- technical versions\\n- dimensions\\n- materials\\n- explicitly stated features\\n- explicitly stated intended uses\\n- explicitly stated compatibility\\n\\n4. NEVER INVENT INFORMATION\\nNever infer information that is not explicitly supported by the source title.\\n\\nIf information is unknown:\\n- brand → null\\n- model → null\\n- compatibility → []\\n- features → []\\n- target_use → []\\n\\nDo not use general product knowledge to fill missing information.\\n\\n5. TECHNICAL VERSIONS\\nPreserve technical version numbers exactly when they are explicitly associated with a technology or specification.\\n\\nExamples:\\n- Bluetooth 5.0\\n- Bluetooth 5.1\\n- Bluetooth 5.3\\n- Bluetooth 5.4\\n- USB 3.0\\n- WiFi 6\\n\\nThese are product specifications and MUST NOT be interpreted as prices, ratings, review counts, or models.\\n\\nFor example:\\n\\\"Bluetooth 5.3 headphones\\\" → feature: \\\"Bluetooth 5.3\\\"\\n\\n6. PRICE AND NUMBER DISAMBIGUATION\\nDo not treat a standalone number as a product specification unless the title clearly connects it to a product feature or technology.\\n\\nExamples:\\n- \\\"TND35.43\\\" → price, remove\\n- \\\"4.9 322 sold\\\" → rating/sales count, remove\\n- \\\"Bluetooth 5.3\\\" → technical specification, preserve\\n- \\\"USB 3.0\\\" → technical specification, preserve\\n- \\\"LP40\\\" → possible model if explicitly associated with the product\\n\\n7. BRAND\\nOnly identify a brand when it is explicitly stated in the source title.\\n\\nExamples:\\n\\\"Lenovo LP40\\\" → brand = \\\"Lenovo\\\"\\n\\\"Y08 headphones\\\" → brand = null\\n\\nDo not treat technologies, generic terms, product categories, or model numbers as brands.\\n\\n8. MODEL\\nOnly identify a model when it is explicitly identifiable as a product model.\\n\\nExamples:\\n\\\"Lenovo LP40\\\" → model = \\\"LP40\\\"\\n\\\"Y08 Bluetooth headphones\\\" → model = \\\"Y08\\\"\\n\\nNever use:\\n- prices\\n- ratings\\n- percentages\\n- sold counts\\n- Bluetooth versions\\nas models.\\n\\n9. COMPATIBILITY\\nOnly add compatibility when compatibility is explicitly stated in the source title.\\n\\nExamples:\\n\\\"for iPhone and Xiaomi\\\" → [\\\"iPhone\\\", \\\"Xiaomi\\\"]\\n\\\"compatible with Android\\\" → [\\\"Android\\\"]\\n\\\"for Android phones\\\" → [\\\"Android phones\\\"]\\n\\nExamples that MUST return an empty compatibility array:\\n\\\"Bluetooth 5.3 headphones\\\" → []\\n\\\"Bluetooth wireless headphones\\\" → []\\n\\\"wireless gaming headphones\\\" → []\\n\\nBluetooth, WiFi, USB, wireless connectivity, or any other technology MUST NOT automatically imply compatibility with Android, iPhone, Windows, Mac, or any other device.\\n\\n10. TARGET USE\\nOnly include a target use when the original title explicitly states that the product is intended for that activity or purpose.\\n\\nValid examples:\\n\\\"gaming headphones\\\" → [\\\"Gaming\\\"]\\n\\\"sports headphones\\\" → [\\\"Sports\\\"]\\n\\\"headphones for running\\\" → [\\\"Running\\\"]\\n\\\"headphones for travel\\\" → [\\\"Travel\\\"]\\n\\nDo NOT infer target use from product category, features, or common usage.\\n\\nExamples:\\n\\\"Bluetooth headphones\\\" → []\\n\\\"headphones with microphone\\\" → []\\n\\\"wireless headphones\\\" → []\\n\\\"travel bags and backpacks\\\" → []\\n\\nDo not use objects, devices, accessories, or compatibility targets as target_use values.\\n\\n11. FEATURES\\nOnly include features explicitly stated in the title.\\n\\nExamples:\\n\\\"foldable Bluetooth headphones with microphone\\\" → [\\\"Foldable design\\\", \\\"Bluetooth\\\", \\\"Microphone\\\"]\\n\\nDo not invent features such as:\\n- ANC\\n- waterproofing\\n- long battery life\\n- fast charging\\n- low latency\\n- premium sound\\nunless they are explicitly stated.\\n\\nMarketing claims such as:\\n- 9D\\n- HiFi\\n- super bass\\n- deep sound\\n- high quality\\n- high-definition\\nmay be preserved as product claims when clearly present, but they must NOT be treated as independently verified technical specifications.\\n\\n12. CATEGORY\\nUse ONLY ONE of the following categories:\\n\\n- Audio\\n- Computer Accessories\\n- Phone Accessories\\n- Smart Home\\n- Beauty\\n- Fitness\\n- Home & Kitchen\\n- Pet Products\\n- Outdoor\\n- Automotive\\n- Fashion\\n- Electronics\\n- Other\\n\\nExamples:\\nHeadphones → Audio\\nEarbuds → Audio\\nGaming headset → Audio\\nBluetooth speaker → Audio\\nPhone case → Phone Accessories\\nWireless charger for phone → Phone Accessories\\nSmart door sensor → Smart Home\\n\\nNever create a new category.\\nNever use subcategories.\\nNever return values such as:\\n\\\"Headphones\\\"\\n\\\"Earbuds\\\"\\n\\\"Wireless Headphones\\\"\\n\\\"Audio > Headphones > Earbuds\\\"\\n\\nAll headphone, earbud, headset, speaker, and similar audio products should use the category \\\"Audio\\\".\\n\\n13. PRODUCT TYPE\\nUse a concise and specific product type.\\n\\nExamples:\\n- Wireless Over-Ear Headphones\\n- TWS Wireless Earbuds\\n- Gaming Headset\\n- Portable Mini Projector\\n- Wireless Keyboard\\n- Phone Case\\n\\nDo not include prices, ratings, sales counts, promotions, or seller information.\\n\\n14. CLEAN TITLE\\nThe clean_title must be concise, readable, and suitable for an e-commerce product catalog.\\n\\nInclude when available:\\n- main product type\\n- brand\\n- model\\n- important explicitly stated features\\n- important explicitly stated technical versions\\n\\nRemove:\\n- prices\\n- currencies\\n- discounts\\n- ratings\\n- review counts\\n- sold counts\\n- shipping information\\n- seller information\\n- promotional text\\n\\nDo not make the title unnecessarily long.\\n\\n15. OUTPUT FORMAT\\nReturn ONLY valid JSON.\\n\\nDo not return:\\n- markdown\\n- code fences\\n- explanations\\n- comments\\n- reasoning\\n- additional text\\n\\nReturn exactly this structure:\\n{\\n  \\\"clean_title\\\": \\\"\\\",\\n  \\\"category\\\": \\\"\\\",\\n  \\\"product_type\\\": \\\"\\\",\\n  \\\"brand\\\": null,\\n  \\\"model\\\": null,\\n  \\\"features\\\": [],\\n  \\\"target_use\\\": [],\\n  \\\"compatibility\\\": []\\n}\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"Clean and normalize this product title:\\n\\n{{ $json.title }}\\n\\nReturn exactly the required JSON structure.\"\n    }\n  ]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        368,
+        -64
+      ],
+      "id": "cccf199b-7a8e-4031-b8cb-6abe0e41407b",
+      "name": "LLM Product Cleaning",
+      "credentials": {
+        "openRouterApi": {
+          "id": "VHMEgHmDEQxwCgx1",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\nconst output = [];\n\nfor (let i = 0; i < items.length; i++) {\n\n    const item = items[i];\n    const data = item.json;\n\n    // Get the LLM response\n    let content =\n        data.choices?.[0]?.message?.content ||\n        data.message?.content ||\n        \"\";\n\n    content = String(content)\n        .replace(/```json/gi, \"\")\n        .replace(/```/g, \"\")\n        .trim();\n\n    let parsed;\n\n    try {\n        parsed = JSON.parse(content);\n    } catch (error) {\n        parsed = {\n            clean_title: \"\",\n            category: \"Other\",\n            product_type: \"\",\n            brand: null,\n            model: null,\n            features: [],\n            target_use: [],\n            compatibility: []\n        };\n    }\n\n    /*\n     * IMPORTANT:\n     * The HTTP Request node can replace the original product data\n     * with the OpenRouter response.\n     *\n     * Therefore we retrieve the corresponding product from\n     * \"Normalize Products\" using the same item index.\n     */\n\n    let original = {};\n\n    try {\n        original = $('Normalize Products').all()[i].json;\n    } catch (error) {\n        original = {};\n    }\n\n    output.push({\n      json: {\n        title: original.title || \"\",\n\n        price: original.price ?? null,\n        original_price: original.original_price ?? null,\n        currency: original.currency || null,\n\n        rating: original.rating ?? null,\n        sold: original.sold ?? null,\n        reviews: original.reviews ?? null,\n        shipping: original.shipping ?? null,\n\n        image_url: original.image_url || \"\",\n        product_url: original.product_url || \"\",\n\n        source: original.source || \"aliexpress\",\n        search_query: original.search_query || \"\",\n\n        clean_title: parsed.clean_title || \"\",\n        category: parsed.category || \"Other\",\n        product_type: parsed.product_type || \"\",\n        brand: parsed.brand ?? null,\n        model: parsed.model ?? null,\n\n        features: Array.isArray(parsed.features)\n            ? parsed.features\n            : [],\n\n        target_use: Array.isArray(parsed.target_use)\n            ? parsed.target_use\n            : [],\n\n        compatibility: Array.isArray(parsed.compatibility)\n            ? parsed.compatibility\n            : []\n      }\n    });\n}\n\nreturn output;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        576,
+        160
+      ],
+      "id": "972afe29-683d-459e-a8eb-1decbc19d560",
+      "name": "Parse Product Cleaning"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://openrouter.ai/api/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openRouterApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"stealth/space-bunny-alpha\",\n  \"temperature\": 0.1,\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"You are a semantic product relevance classifier for an e-commerce product research system.\\n\\nYour task is to determine whether a product is relevant to a user's search query.\\n\\nRULES:\\n1. Compare the search query with the product's clean title, category, product type, features, target use, and compatibility.\\n2. Focus on the actual product type and search intent.\\n3. Do not reject a product simply because its wording differs from the query. Use semantic meaning.\\n4. Products that are direct variants or closely related forms of the searched product can be relevant.\\n5. Do not consider price, rating, popularity, brand, or sales as relevance criteria.\\n6. Return a score between 0 and 1.\\n7. Set is_relevant to true when the product clearly satisfies the search intent.\\n8. Set is_relevant to false when the product is unrelated or only shares a generic keyword.\\n9. Do not invent information.\\n\\nSCORING GUIDELINE:\\n0.90-1.00 = direct match\\n0.75-0.89 = strongly related\\n0.60-0.74 = moderately related\\n0.40-0.59 = weakly related\\n0.00-0.39 = unrelated\\n\\nReturn ONLY valid JSON with exactly this structure:\\n{\\n  \\\"relevance_score\\\": 0.0,\\n  \\\"is_relevant\\\": false,\\n  \\\"reason\\\": \\\"\\\"\\n}\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"Search query:\\n{{ $json.search_query }}\\n\\nProduct title:\\n{{ $json.clean_title }}\\n\\nCategory:\\n{{ $json.category }}\\n\\nProduct type:\\n{{ $json.product_type }}\\n\\nFeatures:\\n{{ $json.features.join(', ') }}\\n\\nTarget use:\\n{{ $json.target_use.join(', ') }}\\n\\nCompatibility:\\n{{ $json.compatibility.join(', ') }}\\n\\nDetermine the semantic relevance of this product to the search query.\"\n    }\n  ]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        816,
+        -64
+      ],
+      "id": "252e82db-6a83-4828-ae4f-f04162ae3488",
+      "name": "Semantic Relevance",
+      "credentials": {
+        "openRouterApi": {
+          "id": "VHMEgHmDEQxwCgx1",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\nconst output = [];\n\nfor (let i = 0; i < items.length; i++) {\n\n    const item = items[i];\n    const data = item.json;\n\n    // Get LLM response\n    let content =\n        data.choices?.[0]?.message?.content ||\n        \"\";\n\n    content = String(content)\n        .replace(/```json/gi, \"\")\n        .replace(/```/g, \"\")\n        .trim();\n\n    let parsed;\n\n    try {\n        parsed = JSON.parse(content);\n    } catch (error) {\n        parsed = {\n            relevance_score: 0,\n            is_relevant: false,\n            reason: \"Failed to parse relevance response\"\n        };\n    }\n\n    // Retrieve original cleaned product\n    let original = {};\n\n    try {\n        original = $('Parse Product Cleaning').all()[i].json;\n    } catch (error) {\n        original = {};\n    }\n\n    // Normalize score\n    let score = Number(parsed.relevance_score);\n\n    if (isNaN(score)) {\n        score = 0;\n    }\n\n    score = Math.max(0, Math.min(1, score));\n\n    output.push({\n        json: {\n            ...original,\n\n            relevance_score: score,\n\n            is_relevant:\n                parsed.is_relevant === true,\n\n            relevance_reason:\n                parsed.reason || \"\"\n        }\n    });\n}\n\nreturn output;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1040,
+        160
+      ],
+      "id": "95b549e7-45e7-42a7-b57f-bffa6ab77279",
+      "name": "Parse Semantic Relevance"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\nconst THRESHOLD = 0.75;\n\nreturn items\n    .filter(item => {\n        const score = Number(item.json.relevance_score);\n        return !isNaN(score) && score >= THRESHOLD;\n    })\n    .map(item => ({\n        json: {\n            ...item.json,\n            relevance_threshold: THRESHOLD\n        }\n    }));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1264,
+        -64
+      ],
+      "id": "cd4c158a-f05b-47bf-b8d4-2bffa6fdab7b",
+      "name": "Filter Relevant Products"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://openrouter.ai/api/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openRouterApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"stealth/space-bunny-alpha\",\n  \"temperature\": 0.1,\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"You are a product opportunity analysis system for an e-commerce and dropshipping research pipeline.\\n\\nYour task is to analyze a product using ONLY the information provided in the input.\\n\\nIMPORTANT RULES:\\n\\n1. DO NOT INVENT INFORMATION\\nNever invent market demand, sales volume, profit margin, shipping time, supplier reliability, competitor prices, customer demographics, or product specifications.\\n\\n2. USE PROVIDED DATA ONLY\\nThe product information comes from a marketplace listing and has already been cleaned and normalized.\\n\\n3. PRODUCT ATTRACTIVENESS\\nEvaluate whether the product has characteristics that could make it interesting for e-commerce based on its explicitly stated features, use cases, and product type.\\n\\n4. PROBLEM SOLVED\\nDescribe the practical problem or need the product addresses, but only when this can reasonably be established from the provided product information.\\n\\n5. TARGET CUSTOMER\\nDescribe the type of customer who would explicitly use the product based on the stated target use, product type, and features.\\nDo not invent demographics such as age, gender, income, or location.\\n\\n6. DIFFERENTIATION\\nIdentify explicitly stated features that could differentiate the product from generic alternatives.\\nDo not claim that a feature is unique unless uniqueness is explicitly established.\\n\\n7. RISKS\\nIdentify potential product-level risks visible from the information provided, such as:\\n- low rating\\n- low sales count\\n- unclear branding\\n- unclear product specifications\\n- water resistance claims\\n- potentially exaggerated marketing claims\\n- product complexity\\n- possible quality concerns suggested by the available rating\\n\\nDo not invent risks that are not supported by the data.\\n\\n8. SELLING ANGLE\\nSuggest a concise marketing angle based only on the explicit product characteristics.\\n\\n9. SCORE\\nReturn an opportunity_score from 0 to 100.\\nThe score is a structured heuristic based ONLY on the supplied product information.\\nConsider:\\n- relevance to the search query\\n- rating\\n- sold count when available\\n- clarity of product type\\n- explicit useful features\\n- target use\\n- differentiation\\n- product risks\\n\\nThe score is NOT a prediction of sales or profitability.\\n\\n10. SCORE INTERPRETATION\\n90-100 = very strong characteristics based on the available information\\n75-89 = strong characteristics\\n60-74 = moderate characteristics\\n40-59 = weak characteristics\\n0-39 = poor characteristics\\n\\n11. OUTPUT\\nReturn ONLY valid JSON.\\nNo markdown.\\nNo code fences.\\nNo explanations outside the JSON.\\n\\nReturn exactly this structure:\\n{\\n  \\\"opportunity_score\\\": 0,\\n  \\\"product_attractiveness\\\": \\\"\\\",\\n  \\\"problem_solved\\\": \\\"\\\",\\n  \\\"target_customer\\\": \\\"\\\",\\n  \\\"key_selling_points\\\": [],\\n  \\\"differentiation\\\": [],\\n  \\\"risks\\\": [],\\n  \\\"selling_angle\\\": \\\"\\\",\\n  \\\"analysis_summary\\\": \\\"\\\"\\n}\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"Search query:\\n{{ $json.search_query }}\\n\\nClean title:\\n{{ $json.clean_title }}\\n\\nCategory:\\n{{ $json.category }}\\n\\nProduct type:\\n{{ $json.product_type }}\\n\\nBrand:\\n{{ $json.brand || 'Unknown' }}\\n\\nModel:\\n{{ $json.model || 'Unknown' }}\\n\\nPrice:\\n{{ $json.price }} {{ $json.currency }}\\n\\nRating:\\n{{ $json.rating ?? 'Unknown' }}\\n\\nSold:\\n{{ $json.sold ?? 'Unknown' }}\\n\\nFeatures:\\n{{ $json.features.join(', ') }}\\n\\nTarget use:\\n{{ $json.target_use.join(', ') }}\\n\\nCompatibility:\\n{{ $json.compatibility.join(', ') }}\\n\\nRelevance score:\\n{{ $json.relevance_score }}\\n\\nAnalyze this product.\"\n    }\n  ]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        1488,
+        144
+      ],
+      "id": "8539161a-2049-431d-af11-0b4bcfad31be",
+      "name": "Product Analysis",
+      "credentials": {
+        "openRouterApi": {
+          "id": "VHMEgHmDEQxwCgx1",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\nconst output = [];\n\nfor (let i = 0; i < items.length; i++) {\n\n    const item = items[i];\n    const data = item.json;\n\n    let content =\n        data.choices?.[0]?.message?.content ||\n        \"\";\n\n    content = String(content)\n        .replace(/```json/gi, \"\")\n        .replace(/```/g, \"\")\n        .trim();\n\n    let parsed;\n\n    try {\n        parsed = JSON.parse(content);\n    } catch (error) {\n        parsed = {\n            opportunity_score: 0,\n            product_attractiveness: \"\",\n            problem_solved: \"\",\n            target_customer: \"\",\n            key_selling_points: [],\n            differentiation: [],\n            risks: [],\n            selling_angle: \"\",\n            analysis_summary: \"\"\n        };\n    }\n\n    let original = {};\n\n    try {\n        original = $('Filter Relevant Products').all()[i].json;\n    } catch (error) {\n        original = {};\n    }\n\n    let score = Number(parsed.opportunity_score);\n\n    if (isNaN(score)) {\n        score = 0;\n    }\n\n    score = Math.max(0, Math.min(100, score));\n\n    output.push({\n        json: {\n            ...original,\n\n            opportunity_score: score,\n\n            product_attractiveness:\n                parsed.product_attractiveness || \"\",\n\n            problem_solved:\n                parsed.problem_solved || \"\",\n\n            target_customer:\n                parsed.target_customer || \"\",\n\n            key_selling_points:\n                Array.isArray(parsed.key_selling_points)\n                    ? parsed.key_selling_points\n                    : [],\n\n            differentiation:\n                Array.isArray(parsed.differentiation)\n                    ? parsed.differentiation\n                    : [],\n\n            risks:\n                Array.isArray(parsed.risks)\n                    ? parsed.risks\n                    : [],\n\n            selling_angle:\n                parsed.selling_angle || \"\",\n\n            analysis_summary:\n                parsed.analysis_summary || \"\"\n        }\n    });\n}\n\nreturn output;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1712,
+        -64
+      ],
+      "id": "c77d6412-22e9-49f6-b2e3-4180b571c094",
+      "name": "Parse Product Analysis"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\nconst ASSUMPTIONS = {\n    selling_price_multiplier: 2.5,\n    payment_fee_rate: 0.03,\n    platform_fee_rate: 0.05,\n    advertising_cost_rate: 0.15\n};\n\nreturn items.map(item => {\n    const p = item.json;\n\n    const price = Number(p.price);\n    const originalPrice = Number(p.original_price);\n\n    let discountPercentage = null;\n\n    if (\n        Number.isFinite(price) &&\n        Number.isFinite(originalPrice) &&\n        originalPrice > 0 &&\n        originalPrice >= price\n    ) {\n        discountPercentage =\n            ((originalPrice - price) / originalPrice) * 100;\n    }\n\n    let estimatedSellingPrice = null;\n    let grossProfit = null;\n    let grossMargin = null;\n\n    if (Number.isFinite(price) && price > 0) {\n        estimatedSellingPrice =\n            price * ASSUMPTIONS.selling_price_multiplier;\n\n        grossProfit =\n            estimatedSellingPrice - price;\n\n        grossMargin =\n            (grossProfit / estimatedSellingPrice) * 100;\n    }\n\n    let paymentFee = null;\n    let platformFee = null;\n    let advertisingCost = null;\n    let estimatedNetProfit = null;\n    let estimatedNetMargin = null;\n\n    if (\n        estimatedSellingPrice !== null &&\n        Number.isFinite(price)\n    ) {\n        paymentFee =\n            estimatedSellingPrice *\n            ASSUMPTIONS.payment_fee_rate;\n\n        platformFee =\n            estimatedSellingPrice *\n            ASSUMPTIONS.platform_fee_rate;\n\n        advertisingCost =\n            estimatedSellingPrice *\n            ASSUMPTIONS.advertising_cost_rate;\n\n        estimatedNetProfit =\n            estimatedSellingPrice\n            - price\n            - paymentFee\n            - platformFee\n            - advertisingCost;\n\n        estimatedNetMargin =\n            (estimatedNetProfit / estimatedSellingPrice) * 100;\n    }\n\n    // REPLACEMENT\n    // null means \"unknown\", not zero. Number(null) is 0 and isFinite(0) is\n    // true, so an unrated or unsold product was being scored as the worst\n    // possible product instead of being left unscored.\n    const toNumberOrNull = (value) => {\n        if (value === null || value === undefined || value === \"\") return null;\n        const n = Number(value);\n        return Number.isFinite(n) ? n : null;\n    };\n\n    const rating = toNumberOrNull(p.rating);\n    const sold = toNumberOrNull(p.sold);\n\n    let ratingScore = null;\n\n    if (rating !== null && rating > 0 && rating <= 5) {\n        ratingScore = (rating / 5) * 100;\n    }\n\n    let salesScore = null;\n\n    if (sold !== null && sold > 0) {\n        salesScore =\n            Math.min(Math.log10(sold + 1) / 5, 1) * 100;\n    }\n\n    return {\n        json: {\n            ...p,\n\n            discount_percentage:\n                discountPercentage !== null\n                    ? Number(discountPercentage.toFixed(2))\n                    : null,\n\n            estimated_selling_price:\n                estimatedSellingPrice !== null\n                    ? Number(estimatedSellingPrice.toFixed(2))\n                    : null,\n\n            gross_profit:\n                grossProfit !== null\n                    ? Number(grossProfit.toFixed(2))\n                    : null,\n\n            gross_margin:\n                grossMargin !== null\n                    ? Number(grossMargin.toFixed(2))\n                    : null,\n\n            payment_fee:\n                paymentFee !== null\n                    ? Number(paymentFee.toFixed(2))\n                    : null,\n\n            platform_fee:\n                platformFee !== null\n                    ? Number(platformFee.toFixed(2))\n                    : null,\n\n            advertising_cost:\n                advertisingCost !== null\n                    ? Number(advertisingCost.toFixed(2))\n                    : null,\n\n            estimated_net_profit:\n                estimatedNetProfit !== null\n                    ? Number(estimatedNetProfit.toFixed(2))\n                    : null,\n\n            estimated_net_margin:\n                estimatedNetMargin !== null\n                    ? Number(estimatedNetMargin.toFixed(2))\n                    : null,\n\n            rating_score:\n                ratingScore !== null\n                    ? Number(ratingScore.toFixed(2))\n                    : null,\n\n            sales_score:\n                salesScore !== null\n                    ? Number(salesScore.toFixed(2))\n                    : null,\n\n            assumptions: {\n                selling_price_multiplier:\n                    ASSUMPTIONS.selling_price_multiplier,\n\n                payment_fee_rate:\n                    ASSUMPTIONS.payment_fee_rate,\n\n                platform_fee_rate:\n                    ASSUMPTIONS.platform_fee_rate,\n\n                advertising_cost_rate:\n                    ASSUMPTIONS.advertising_cost_rate\n            }\n        }\n    };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2160,
+        -64
+      ],
+      "id": "ff0e4c3e-8fca-43d3-a4fa-30a977ede9a1",
+      "name": "Business Metrics"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\nfunction clamp(value, min = 0, max = 100) {\n    return Math.max(min, Math.min(max, value));\n}\n\nfunction normalizeMargin(margin) {\n    if (margin === null || margin === undefined || isNaN(margin)) {\n        return null;\n    }\n\n    // 40% net margin or more = 100\n    return clamp((Number(margin) / 40) * 100);\n}\n\nfunction normalizeProfit(profit) {\n    if (profit === null || profit === undefined || isNaN(profit)) {\n        return null;\n    }\n\n    // 25 TND net profit or more = 100.\n    // At 40 the scale ceilinged around 43 TND cost price, so every product\n    // above that was identical and the axis stopped ranking anything.\n    return clamp((Number(profit) / 25) * 100);\n}\n\nfunction normalizeDiscount(discount) {\n    if (discount === null || discount === undefined || isNaN(discount)) {\n        return null;\n    }\n\n    // 50% discount = full score.\n    // We don't reward discounts above this level.\n    return clamp((Number(discount) / 50) * 100);\n}\n\nreturn items.map(item => {\n    const p = item.json;\n\n    // --------------------------------------------------\n    // 1. RELEVANCE\n    // --------------------------------------------------\n\n    const relevanceScore =\n        Number(p.relevance_score || 0) * 100;\n\n\n    // --------------------------------------------------\n    // 2. OPPORTUNITY\n    // --------------------------------------------------\n\n    const opportunityScore =\n        clamp(Number(p.opportunity_score || 0));\n\n\n    // --------------------------------------------------\n    // 3. MARKET VALIDATION\n    // --------------------------------------------------\n\n    const salesScore =\n        p.sales_score !== null &&\n        p.sales_score !== undefined\n            ? Number(p.sales_score)\n            : null;\n\n    const ratingScore =\n        p.rating_score !== null &&\n        p.rating_score !== undefined\n            ? Number(p.rating_score)\n            : null;\n\n    let marketScore = null;\n\n    if (\n        salesScore !== null &&\n        ratingScore !== null\n    ) {\n        marketScore =\n            (salesScore * 0.60) +\n            (ratingScore * 0.40);\n    } else if (salesScore !== null) {\n        marketScore = salesScore;\n    } else if (ratingScore !== null) {\n        marketScore = ratingScore;\n    }\n\n\n    // --------------------------------------------------\n    // 4. PROFITABILITY\n    // --------------------------------------------------\n\n    const marginScore =\n        normalizeMargin(p.estimated_net_margin);\n\n    const profitScore =\n        normalizeProfit(p.estimated_net_profit);\n\n    let profitabilityScore = null;\n\n    if (\n        marginScore !== null &&\n        profitScore !== null\n    ) {\n        profitabilityScore =\n            (marginScore * 0.70) +\n            (profitScore * 0.30);\n    } else if (marginScore !== null) {\n        profitabilityScore = marginScore;\n    } else if (profitScore !== null) {\n        profitabilityScore = profitScore;\n    }\n\n\n    // --------------------------------------------------\n    // 5. PRODUCT QUALITY\n    // --------------------------------------------------\n\n    const discountScore =\n        normalizeDiscount(p.discount_percentage);\n\n    let shippingScore = null;\n\n    if (p.shipping) {\n        const shippingText =\n            String(p.shipping).toLowerCase();\n\n        if (\n            shippingText.includes(\"free\") ||\n            shippingText.includes(\"مجاني\")\n        ) {\n            shippingScore = 100;\n        } else {\n            shippingScore = 50;\n        }\n    }\n\n    let qualityScore = null;\n\n    const qualityComponents = [];\n\n    if (ratingScore !== null) {\n        qualityComponents.push({\n            value: ratingScore,\n            weight: 0.60\n        });\n    }\n\n    if (discountScore !== null) {\n        qualityComponents.push({\n            value: discountScore,\n            weight: 0.20\n        });\n    }\n\n    if (shippingScore !== null) {\n        qualityComponents.push({\n            value: shippingScore,\n            weight: 0.20\n        });\n    }\n\n    if (qualityComponents.length > 0) {\n        const totalWeight =\n            qualityComponents.reduce(\n                (sum, component) => sum + component.weight,\n                0\n            );\n\n        qualityScore =\n            qualityComponents.reduce(\n                (sum, component) =>\n                    sum +\n                    component.value *\n                    component.weight,\n                0\n            ) / totalWeight;\n    }\n\n\n    // --------------------------------------------------\n    // 6. FINAL SCORE\n    // --------------------------------------------------\n\n    const components = [];\n\n    if (relevanceScore !== null) {\n        components.push({\n            value: relevanceScore,\n            weight: 0.20\n        });\n    }\n\n    if (opportunityScore !== null) {\n        components.push({\n            value: opportunityScore,\n            weight: 0.20\n        });\n    }\n\n    if (marketScore !== null) {\n        components.push({\n            value: marketScore,\n            weight: 0.20\n        });\n    }\n\n    if (profitabilityScore !== null) {\n        components.push({\n            value: profitabilityScore,\n            weight: 0.25\n        });\n    }\n\n    if (qualityScore !== null) {\n        components.push({\n            value: qualityScore,\n            weight: 0.15\n        });\n    }\n\n    const totalWeight =\n        components.reduce(\n            (sum, component) =>\n                sum + component.weight,\n            0\n        );\n\n    const finalScore =\n        components.length > 0\n            ? components.reduce(\n                (sum, component) =>\n                    sum +\n                    component.value *\n                    component.weight,\n                0\n            ) / totalWeight\n            : 0;\n\n\n    return {\n        json: {\n            ...p,\n\n            relevance_component:\n                Number(relevanceScore.toFixed(2)),\n\n            opportunity_component:\n                Number(opportunityScore.toFixed(2)),\n\n            market_validation_score:\n                marketScore !== null\n                    ? Number(marketScore.toFixed(2))\n                    : null,\n\n            profitability_score:\n                profitabilityScore !== null\n                    ? Number(profitabilityScore.toFixed(2))\n                    : null,\n\n            product_quality_score:\n                qualityScore !== null\n                    ? Number(qualityScore.toFixed(2))\n                    : null,\n\n            final_product_score:\n                Number(finalScore.toFixed(2)),\n\n            scoring_weights: {\n                relevance: 0.20,\n                opportunity: 0.20,\n                market_validation: 0.20,\n                profitability: 0.25,\n                product_quality: 0.15\n            }\n        }\n    };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2368,
+        160
+      ],
+      "id": "a4f9bf09-1a21-44fa-ab50-820b88c71ba1",
+      "name": "Final Product Score"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\nconst sorted = [...items].sort((a, b) => {\n    const scoreA = Number(a.json.final_product_score ?? 0);\n    const scoreB = Number(b.json.final_product_score ?? 0);\n\n    return scoreB - scoreA;\n});\n\nreturn sorted.map((item, index) => ({\n    json: {\n        ...item.json,\n        rank: index + 1\n    }\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2608,
+        -64
+      ],
+      "id": "104ce0c5-3a5c-44ee-a6fa-da448fb09956",
+      "name": "Rank Products"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\nreturn items.map(item => {\n    const p = item.json;\n\n    return {\n        json: {\n            rank: p.rank,\n\n            product: {\n                title: p.clean_title,\n                type: p.product_type,\n                category: p.category,\n\n                price: p.price,\n                currency: p.currency,\n                original_price: p.original_price,\n                discount_percentage: p.discount_percentage,\n\n                estimated_selling_price:\n                    p.estimated_selling_price,\n\n                estimated_net_profit:\n                    p.estimated_net_profit,\n\n                estimated_net_margin:\n                    p.estimated_net_margin\n            },\n\n            validation: {\n                rating: p.rating,\n                sold: p.sold,\n                reviews: p.reviews,\n                validation_status:\n                    p.sold === null || p.sold === undefined ? \"unvalidated\" :\n                    p.sold >= 100 ? \"validated\" :\n                    \"weak_signal\",\n                relevance_score:\n                    p.relevance_score,\n\n                opportunity_score:\n                    p.opportunity_score\n            },\n\n            score: {\n                final: p.final_product_score,\n\n                relevance:\n                    p.relevance_component,\n\n                opportunity:\n                    p.opportunity_component,\n\n                market_validation:\n                    p.market_validation_score,\n\n                profitability:\n                    p.profitability_score,\n\n                product_quality:\n                    p.product_quality_score\n            },\n\n            product_analysis: {\n                target_customer:\n                    p.target_customer,\n\n                problem_solved:\n                    p.problem_solved,\n\n                key_selling_points:\n                    p.key_selling_points,\n\n                differentiation:\n                    p.differentiation,\n\n                risks:\n                    p.risks,\n\n                selling_angle:\n                    p.selling_angle,\n\n                summary:\n                    p.analysis_summary\n            },\n\n            source: {\n                platform: p.source,\n                search_query: p.search_query,\n                product_url: p.product_url,\n                image_url: p.image_url\n            }\n        }\n    };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2800,
+        144
+      ],
+      "id": "e4ef60a6-2d55-4069-9a1a-67c9395617d9",
+      "name": "Final Product Output"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "05a1eaa6-fc26-4c26-b8da-c0c287bf515b",
+              "leftValue": "={{ $json.price !== null && $json.price !== undefined && Number($json.price) > 0 }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.3,
+      "position": [
+        1952,
+        160
+      ],
+      "id": "651b0b60-00a6-4dfe-b535-e24bd514ebdd",
+      "name": "Filter"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://playwright:3000/search",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"query\": \"{{ $('aliexpress').item.json.product_name }}\",\n  \"marketplace\": \"{{ $('aliexpress').item.json.marketplace }}\",\n  \"limit\": 10\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        -96,
+        -64
+      ],
+      "id": "2fb690c4-e8ac-4c69-9205-20cc66a8d585",
+      "name": "Aliexpress Scrapper"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "7d8b98bd-73ee-4892-9c7c-4220b4d59629",
+              "name": "product_name",
+              "value": "wireless headphones",
+              "type": "string"
+            },
+            {
+              "id": "63c7742b-53d5-4674-8ee7-b8032acab2ba",
+              "name": "marketplace",
+              "value": "aliexpress",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        -320,
+        144
+      ],
+      "id": "81368755-eb10-4b21-8182-af437a6f53b0",
+      "name": "aliexpress"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {}
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        -544,
+        -32
+      ],
+      "id": "9b04f3b6-0116-41c7-9bd4-d87f20fe812b",
+      "name": "Schedule Trigger"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Normalize Products": {
+      "main": [
+        [
+          {
+            "node": "LLM Product Cleaning",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LLM Product Cleaning": {
+      "main": [
+        [
+          {
+            "node": "Parse Product Cleaning",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Product Cleaning": {
+      "main": [
+        [
+          {
+            "node": "Semantic Relevance",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Semantic Relevance": {
+      "main": [
+        [
+          {
+            "node": "Parse Semantic Relevance",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Semantic Relevance": {
+      "main": [
+        [
+          {
+            "node": "Filter Relevant Products",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Relevant Products": {
+      "main": [
+        [
+          {
+            "node": "Product Analysis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Product Analysis": {
+      "main": [
+        [
+          {
+            "node": "Parse Product Analysis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Product Analysis": {
+      "main": [
+        [
+          {
+            "node": "Filter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Business Metrics": {
+      "main": [
+        [
+          {
+            "node": "Final Product Score",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Final Product Score": {
+      "main": [
+        [
+          {
+            "node": "Rank Products",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Rank Products": {
+      "main": [
+        [
+          {
+            "node": "Final Product Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Final Product Output": {
+      "main": [
+        []
+      ]
+    },
+    "Filter": {
+      "main": [
+        [
+          {
+            "node": "Business Metrics",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aliexpress Scrapper": {
+      "main": [
+        [
+          {
+            "node": "Normalize Products",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "aliexpress": {
+      "main": [
+        [
+          {
+            "node": "Aliexpress Scrapper",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "aliexpress",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "timeSavedMode": "fixed",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "versionId": "c5526472-5165-48e5-ae48-2cf40de6e1d5",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "49291b0c4a606f00470f79cbd49a0942ac25e93c190b62cd5d5411c05076d368"
+  },
+  "nodeGroups": [],
+  "id": "qb0wqiW3dQj4nzrm",
+  "tags": []
+}
